@@ -27,8 +27,9 @@ var cheerio = require('cheerio');
 var rest = require('restler');
 var sys = require('util');
 var HTMLFILE_DEFAULT = "index.html";
+var HTMLFILE_FROM_URL = "index_url.html";
 var CHECKSFILE_DEFAULT = "checks.json";
-var CHECKOUTFILE_FROM_URL = "JSON.output.txt";
+var CHECKOUTFILE_DEFAULT = "JSON.output.txt";
 var CHECKURL_DEFAULT = "http://blooming-falls-1031.herokuapp.com";
 
 var assertFileExists = function(infile) {
@@ -42,11 +43,11 @@ var assertFileExists = function(infile) {
 
 var assertUrlExists = function(url) {
     rest.get(url).on('complete', function(output) {
-        if(result instanceof Error) {
+        if(output instanceof Error) {
             sys.puts('Error: ' + result.message);
             this.retry(5000);
         } else {
-            var outfile = CHECKOUTFILE_FROM_URL;
+            var outfile = HTMLFILE_FROM_URL;
             var out = output;
             fs.writeFileSync(outfile, out);
             return output;
@@ -83,9 +84,12 @@ if(require.main == module) {
     program
         .option('-f, --file <html_file>', 'Path to index.html', clone(assertFileExists), HTMLFILE_DEFAULT)
         .option('-c, --checks <check_file>', 'Path to checks.json', clone(assertFileExists), CHECKSFILE_DEFAULT)
+        .option('-u, --url [url]', 'URL of a website', clone(assertUrlExists))
         .parse(process.argv);
     var checkJson = checkHtmlFile(program.file, program.checks);
     var outJson = JSON.stringify(checkJson, null, 4);
+    var outfile = CHECKOUTFILE_DEFAULT;
+    fs.writeFileSync(outfile, outJson);
     console.log(outJson);
 } else {
     exports.checkHtmlFile = checkHtmlFile;
